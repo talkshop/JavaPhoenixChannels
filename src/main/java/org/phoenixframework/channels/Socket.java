@@ -159,13 +159,12 @@ public class Socket {
      */
     public static class Builder {
 
-        private String endpointUri;
+        private final String endpointUri;
         private Integer heartbeatIntervalInMs;
         private OkHttpClient httpClient;
 
-        public Builder setEndpointUri(final String endpointUri) {
+        public Builder(final String endpointUri) {
             this.endpointUri = endpointUri;
-            return this;
         }
 
         public Builder setHeartbeatIntervalInMs(final int heartbeatIntervalInMs) {
@@ -181,7 +180,7 @@ public class Socket {
         public Socket build() {
             return new Socket(endpointUri,
                 heartbeatIntervalInMs == null ? DEFAULT_HEARTBEAT_INTERVAL : heartbeatIntervalInMs,
-                httpClient);
+                httpClient == null ? new OkHttpClient() : httpClient);
         }
     }
 
@@ -196,14 +195,14 @@ public class Socket {
     }
 
     public Socket(final String endpointUri, final int heartbeatIntervalInMs) {
-        this(endpointUri, heartbeatIntervalInMs, null);
+        this(endpointUri, heartbeatIntervalInMs, new OkHttpClient());
     }
 
     public Socket(final String endpointUri, final int heartbeatIntervalInMs, final OkHttpClient httpClient) {
         log.trace("PhoenixSocket({})", endpointUri);
         this.endpointUri = endpointUri;
         this.heartbeatInterval = heartbeatIntervalInMs;
-        this.httpClient = httpClient == null ? new OkHttpClient() : httpClient;
+        this.httpClient = httpClient;
         this.timer = new Timer("Reconnect Timer for " + endpointUri);
     }
 
