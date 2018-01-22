@@ -130,7 +130,7 @@ public class Socket {
 
     private TimerTask heartbeatTimerTask = null;
 
-    private final OkHttpClient httpClient = new OkHttpClient();
+    private final OkHttpClient httpClient;
 
     private final Set<IMessageCallback> messageCallbacks = Collections.newSetFromMap(new HashMap<IMessageCallback, Boolean>());
 
@@ -155,6 +155,37 @@ public class Socket {
     private WebSocket webSocket = null;
 
     /**
+     * Builder class for {@link Socket}.
+     */
+    public static class Builder {
+
+        private String endpointUri;
+        private Integer heartbeatIntervalInMs;
+        private OkHttpClient httpClient;
+
+        public Builder setEndpointUri(final String endpointUri) {
+            this.endpointUri = endpointUri;
+            return this;
+        }
+
+        public Builder setHeartbeatIntervalInMs(final int heartbeatIntervalInMs) {
+            this.heartbeatIntervalInMs = heartbeatIntervalInMs;
+            return this;
+        }
+
+        public Builder setHttpClient(final OkHttpClient httpBuilder) {
+            this.httpClient = httpBuilder;
+            return this;
+        }
+
+        public Socket build() {
+            return new Socket(endpointUri,
+                heartbeatIntervalInMs == null ? DEFAULT_HEARTBEAT_INTERVAL : heartbeatIntervalInMs,
+                httpClient);
+        }
+    }
+
+    /**
      * Annotated WS Endpoint. Private member to prevent confusion with "onConn*" registration
      * methods.
      */
@@ -165,9 +196,14 @@ public class Socket {
     }
 
     public Socket(final String endpointUri, final int heartbeatIntervalInMs) {
+        this(endpointUri, heartbeatIntervalInMs, null);
+    }
+
+    public Socket(final String endpointUri, final int heartbeatIntervalInMs, final OkHttpClient httpClient) {
         log.trace("PhoenixSocket({})", endpointUri);
         this.endpointUri = endpointUri;
         this.heartbeatInterval = heartbeatIntervalInMs;
+        this.httpClient = httpClient == null ? new OkHttpClient() : httpClient;
         this.timer = new Timer("Reconnect Timer for " + endpointUri);
     }
 
