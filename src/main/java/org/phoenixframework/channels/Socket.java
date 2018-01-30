@@ -98,7 +98,7 @@ public class Socket {
                 //the same channel error callbacks multiple times?
                 triggerChannelError();
                 for (final IErrorCallback callback : errorCallbacks) {
-                    callback.onError(t.getMessage());
+                    callback.onError(t);
                 }
             } finally {
                 // Assume closed on failure

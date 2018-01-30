@@ -70,7 +70,7 @@ public class Channel {
         });
         this.onError(new IErrorCallback() {
             @Override
-            public void onError(String reason) {
+            public void onError(Throwable t) {
                 Channel.this.state = ChannelState.ERRORED;
                 scheduleRejoinTimer();
             }
@@ -177,7 +177,7 @@ public class Channel {
                 if (envelope != null) {
                     reason = envelope.getReason();
                 }
-                callback.onError(reason);
+                callback.onError(new IOException(reason));
             }
         });
     }
