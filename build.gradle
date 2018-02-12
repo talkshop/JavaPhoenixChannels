@@ -10,8 +10,8 @@ if (project.hasProperty('signing.keyId')) {
     apply plugin: 'signing'
 }
 
-group = 'org.phoenixframework.channels'
-version = '0.2.0'
+group = 'com.dyoed'
+version = '0.3.0'
 
 allprojects {
     sourceCompatibility = 1.7
@@ -62,22 +62,33 @@ publishing {
     publications {
         JavaPhoenixChannelsJar(MavenPublication) {
             from components.java
-            groupId 'com.github.eoinsha'
-            artifactId 'JavaPhoenixChannels'
-            version '0.2'
+            groupId 'com.dyoed.phoenix'
+            artifactId 'java-phoenix-channels'
+            version '0.3.0'
         }
     }
 }
 
 bintray {
-    user = System.getenv('BINTRAY_USER')
-    key = System.getenv('BINTRAY_KEY')
+
+    File localPropsFile = file(project.rootProject.file('local.properties'))
+    if (localPropsFile.exists()) {
+        Properties p = new Properties()
+        p.load(new FileInputStream(localPropsFile))
+        p.each { name, value ->
+            ext[name] = value
+        }
+    } else {
+        throw new IllegalStateException("local.properties could not be located for build process")
+    }
+
+    user = buser
+    key = bapikey
     pkg {
-        repo = 'java-phoenix-channels'
-        name = 'JavaPhoenixChannels'
-        userOrg = 'javaphoenixchannels'
+        repo = 'maven'
+        name = 'java-phoenix-channels'
         licenses = ['BSD-3']
-        vcsUrl = 'https://github.com/eoinsha/JavaPhoenixChannels.git'
+        vcsUrl = 'https://github.com/jecsan/JavaPhoenixChannels.git'
     }
     publications = ['JavaPhoenixChannelsJar']
 }
