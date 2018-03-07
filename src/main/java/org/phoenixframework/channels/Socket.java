@@ -64,10 +64,12 @@ public class Socket {
 
         @Override
         public void onMessage(WebSocket webSocket, String text) {
-            log.debug("onMessage: {}", text);
 
             try {
                 final Envelope envelope = objectMapper.readValue(text, Envelope.class);
+                if (!envelope.getTopic().equals("phoenix")) {
+                    log.debug("onMessage: {}", text);
+                }
                 synchronized (channels) {
                     for (final Channel channel : channels) {
                         if (channel.isMember(envelope.getTopic())) {
@@ -321,7 +323,9 @@ public class Socket {
         node.set("payload", envelope.getPayload() == null ? objectMapper.createObjectNode() : envelope.getPayload());
         final String json = objectMapper.writeValueAsString(node);
 
-        log.debug("push: {}, isConnected:{}, JSON:{}", envelope, isConnected(), json);
+        if (!envelope.getEvent().equals("heartbeat")) {
+            log.debug("push: {}, isConnected:{}, JSON:{}", envelope, isConnected(), json);
+        }
 
         RequestBody body = RequestBody.create(MediaType.parse("text/xml"), json);
 
@@ -428,11 +432,11 @@ public class Socket {
         Socket.this.heartbeatTimerTask = new TimerTask() {
             @Override
             public void run() {
-                log.debug("heartbeatTimerTask run");
+//                log.debug("heartbeatTimerTask run");
                 if (Socket.this.isConnected()) {
                     try {
                         Envelope envelope = new Envelope("phoenix", "heartbeat",
-                                new ObjectNode(JsonNodeFactory.instance), Socket.this.makeRef());
+                                new ObjectNode(JsonNodeFactory.instance).put("show_log", false), Socket.this.makeRef());
                         Socket.this.push(envelope);
                     } catch (Exception e) {
                         log.error("Failed to send heartbeat", e);

@@ -144,7 +144,7 @@ public class Push {
 
     void send() throws IOException {
         final String ref = channel.getSocket().makeRef();
-        log.debug("Push send, ref={}", ref);
+//        log.debug("Push send, ref={}", ref);
 
         this.refEvent = Socket.replyEventName(ref);
         this.receivedEnvelope = null;
