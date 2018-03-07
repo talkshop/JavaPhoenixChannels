@@ -16,6 +16,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import org.apache.log4j.varia.NullAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,13 +31,25 @@ import okio.ByteString;
 
 public class Socket {
 
+    public static boolean DEBUG = true;
+
+    static {
+        if (!DEBUG) {
+            org.apache.log4j.Logger.getRootLogger().removeAllAppenders();
+            org.apache.log4j.Logger.getRootLogger().addAppender(new NullAppender());
+        } else {
+            org.apache.log4j.BasicConfigurator.configure();
+        }
+    }
+
     private static final Logger log = LoggerFactory.getLogger(Socket.class);
+
 
     public class PhoenixWSListener extends WebSocketListener {
 
         @Override
         public void onOpen(WebSocket webSocket, Response response) {
-            log.trace("WebSocket onOpen: {}", webSocket);
+            log.debug("WebSocket onOpen: {}", webSocket);
             Socket.this.webSocket = webSocket;
             cancelReconnectTimer();
 
@@ -51,7 +64,7 @@ public class Socket {
 
         @Override
         public void onMessage(WebSocket webSocket, String text) {
-            log.trace("onMessage: {}", text);
+            log.debug("onMessage: {}", text);
 
             try {
                 final Envelope envelope = objectMapper.readValue(text, Envelope.class);
@@ -82,7 +95,7 @@ public class Socket {
 
         @Override
         public void onClosed(WebSocket webSocket, int code, String reason) {
-            log.trace("WebSocket onClose {}/{}", code, reason);
+            log.debug("WebSocket onClose {}/{}", code, reason);
             Socket.this.webSocket = null;
 
             for (final ISocketCloseCallback callback : socketCloseCallbacks) {
@@ -145,10 +158,10 @@ public class Socket {
     private final LinkedBlockingQueue<RequestBody> sendBuffer = new LinkedBlockingQueue<>();
 
     private final Set<ISocketCloseCallback> socketCloseCallbacks = Collections
-        .newSetFromMap(new HashMap<ISocketCloseCallback, Boolean>());
+            .newSetFromMap(new HashMap<ISocketCloseCallback, Boolean>());
 
     private final Set<ISocketOpenCallback> socketOpenCallbacks = Collections
-        .newSetFromMap(new HashMap<ISocketOpenCallback, Boolean>());
+            .newSetFromMap(new HashMap<ISocketOpenCallback, Boolean>());
 
     private Timer timer = null;
 
@@ -179,8 +192,8 @@ public class Socket {
 
         public Socket build() {
             return new Socket(endpointUri,
-                heartbeatIntervalInMs == null ? DEFAULT_HEARTBEAT_INTERVAL : heartbeatIntervalInMs,
-                httpClient == null ? new OkHttpClient() : httpClient);
+                    heartbeatIntervalInMs == null ? DEFAULT_HEARTBEAT_INTERVAL : heartbeatIntervalInMs,
+                    httpClient == null ? new OkHttpClient() : httpClient);
         }
     }
 
@@ -199,7 +212,7 @@ public class Socket {
     }
 
     public Socket(final String endpointUri, final int heartbeatIntervalInMs, final OkHttpClient httpClient) {
-        log.trace("PhoenixSocket({})", endpointUri);
+        log.debug("PhoenixSocket({})", endpointUri);
         this.endpointUri = endpointUri;
         this.heartbeatInterval = heartbeatIntervalInMs;
         this.httpClient = httpClient;
@@ -214,7 +227,7 @@ public class Socket {
      * @return A Channel instance to be used for sending and receiving events for the topic
      */
     public Channel chan(final String topic, final JsonNode payload) {
-        log.trace("chan: {}, {}", topic, payload);
+        log.debug("chan: {}, {}", topic, payload);
         final Channel channel = new Channel(topic, payload, Socket.this);
         synchronized (channels) {
             channels.add(channel);
@@ -223,17 +236,17 @@ public class Socket {
     }
 
     public void connect() throws IOException {
-        log.trace("connect");
+        log.debug("connect");
         disconnect();
         // No support for ws:// or ws:// in okhttp. See https://github.com/square/okhttp/issues/1652
         final String httpUrl = this.endpointUri.replaceFirst("^ws:", "http:")
-            .replaceFirst("^wss:", "https:");
+                .replaceFirst("^wss:", "https:");
         final Request request = new Request.Builder().url(httpUrl).build();
         webSocket = httpClient.newWebSocket(request, wsListener);
     }
 
     public void disconnect() throws IOException {
-        log.trace("disconnect");
+        log.debug("disconnect");
         if (webSocket != null) {
             webSocket.close(1001 /*CLOSE_GOING_AWAY*/, "Disconnected by client");
         }
@@ -308,7 +321,7 @@ public class Socket {
         node.set("payload", envelope.getPayload() == null ? objectMapper.createObjectNode() : envelope.getPayload());
         final String json = objectMapper.writeValueAsString(node);
 
-        log.trace("push: {}, isConnected:{}, JSON:{}", envelope, isConnected(), json);
+        log.debug("push: {}, isConnected:{}, JSON:{}", envelope, isConnected(), json);
 
         RequestBody body = RequestBody.create(MediaType.parse("text/xml"), json);
 
@@ -355,11 +368,11 @@ public class Socket {
     @Override
     public String toString() {
         return "PhoenixSocket{" +
-            "endpointUri='" + endpointUri + '\'' +
-            ", channels(" + channels.size() + ")=" + channels +
-            ", refNo=" + refNo +
-            ", webSocket=" + webSocket +
-            '}';
+                "endpointUri='" + endpointUri + '\'' +
+                ", channels(" + channels.size() + ")=" + channels +
+                ", refNo=" + refNo +
+                ", webSocket=" + webSocket +
+                '}';
     }
 
     synchronized String makeRef() {
@@ -400,7 +413,7 @@ public class Socket {
         Socket.this.reconnectTimerTask = new TimerTask() {
             @Override
             public void run() {
-                log.trace("reconnectTimerTask run");
+                log.debug("reconnectTimerTask run");
                 try {
                     Socket.this.connect();
                 } catch (Exception e) {
@@ -415,11 +428,11 @@ public class Socket {
         Socket.this.heartbeatTimerTask = new TimerTask() {
             @Override
             public void run() {
-                log.trace("heartbeatTimerTask run");
+                log.debug("heartbeatTimerTask run");
                 if (Socket.this.isConnected()) {
                     try {
                         Envelope envelope = new Envelope("phoenix", "heartbeat",
-                            new ObjectNode(JsonNodeFactory.instance), Socket.this.makeRef());
+                                new ObjectNode(JsonNodeFactory.instance), Socket.this.makeRef());
                         Socket.this.push(envelope);
                     } catch (Exception e) {
                         log.error("Failed to send heartbeat", e);
@@ -429,7 +442,7 @@ public class Socket {
         };
 
         timer.schedule(Socket.this.heartbeatTimerTask, Socket.this.heartbeatInterval,
-            Socket.this.heartbeatInterval);
+                Socket.this.heartbeatInterval);
     }
 
     private void triggerChannelError() {
