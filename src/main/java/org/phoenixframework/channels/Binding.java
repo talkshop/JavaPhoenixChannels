@@ -20,8 +20,17 @@ class Binding {
     @Override
     public String toString() {
         return "Binding{" +
-            "event='" + event + '\'' +
-            ", callback=" + callback +
-            '}';
+                "event='" + event + '\'' +
+                ", callback=" + callback +
+                '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o != null && o instanceof Binding) {
+            Binding c = (Binding) o;
+            return c.event.equals(event);
+        }
+        return false;
     }
 }

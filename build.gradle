@@ -11,7 +11,7 @@ if (project.hasProperty('signing.keyId')) {
 }
 
 group = 'com.dyoed'
-version = '0.3.3'
+version = '0.3.4'
 
 allprojects {
     sourceCompatibility = 1.7
@@ -21,7 +21,7 @@ allprojects {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.3'
-    compile 'com.squareup.okhttp3:okhttp:3.8.0'
+    compile 'com.squareup.okhttp3:okhttp:3.9.1'
     compile 'org.slf4j:slf4j-log4j12:1.7.22'
     testCompile 'org.codehaus.groovy:groovy-all:2.3.10'
     testCompile "org.spockframework:spock-core:1.0-groovy-2.3"
@@ -30,7 +30,7 @@ dependencies {
     testRuntime "org.hamcrest:hamcrest-core:1.3" // only necessary if Hamcrest matchers are used
     testRuntime "cglib:cglib-nodep:3.1"
     // allows mocking of classes (in addition to interfaces)
-    testRuntime "org.objenesis:objenesis:2.1"
+    testRuntime "org.objenesis:objenesis:2.5"
     // allows mocking of classes without default constructor (together with CGLIB)
 }
 
@@ -66,7 +66,7 @@ publishing {
             artifact javadocJar
             groupId 'com.dyoed.phoenix'
             artifactId 'java-phoenix-channels'
-            version '0.3.3'
+            version '0.3.4'
         }
     }
 }

@@ -5,20 +5,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingQueue;
-
 import org.apache.log4j.varia.NullAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -70,13 +69,23 @@ public class Socket {
                 if (!envelope.getTopic().equals("phoenix")) {
                     log.debug("onMessage: {}", text);
                 }
-                synchronized (channels) {
-                    for (final Channel channel : channels) {
-                        if (channel.isMember(envelope.getTopic())) {
-                            channel.trigger(envelope.getEvent(), envelope);
-                        }
+
+
+                for (String key : channels.keySet()) {
+                    Channel channel = channels.get(key);
+                    if (channel.isMember(envelope.getTopic())) {
+                        channel.trigger(envelope.getEvent(), envelope);
                     }
                 }
+
+//                synchronized (channels) {
+//
+//                    for (final Channel channel : channels) {
+//                        if (channel.isMember(envelope.getTopic())) {
+//                            channel.trigger(envelope.getEvent(), envelope);
+//                        }
+//                    }
+//                }
 
                 for (final IMessageCallback callback : messageCallbacks) {
                     callback.onMessage(envelope);
@@ -135,7 +144,7 @@ public class Socket {
 
     private static final int DEFAULT_HEARTBEAT_INTERVAL = 7000;
 
-    private final List<Channel> channels = new ArrayList<>();
+    private final Map<String, Channel> channels = new ConcurrentHashMap<>();
 
     private String endpointUri = null;
 
@@ -230,11 +239,18 @@ public class Socket {
      */
     public Channel chan(final String topic, final JsonNode payload) {
         log.debug("chan: {}, {}", topic, payload);
-        final Channel channel = new Channel(topic, payload, Socket.this);
-        synchronized (channels) {
-            channels.add(channel);
+        if (!channels.containsKey(topic)) {
+            final Channel channel = new Channel(topic, payload, Socket.this);
+            channels.put(topic, channel);
         }
-        return channel;
+
+        return channels.get(topic);
+
+//        synchronized (channels) {
+//            if (channels.contains(channel))
+//                channels.add(channel);
+//        }
+//        return channel;
     }
 
     public void connect() throws IOException {
@@ -354,12 +370,13 @@ public class Socket {
      */
     public void remove(final Channel channel) {
         synchronized (channels) {
-            for (final Iterator chanIter = channels.iterator(); chanIter.hasNext(); ) {
-                if (chanIter.next() == channel) {
-                    chanIter.remove();
-                    break;
-                }
-            }
+            channels.remove(channel.getTopic());
+//            for (final Iterator chanIter = channels.iterator(); chanIter.hasNext(); ) {
+//                if (chanIter.next() == channel) {
+//                    chanIter.remove();
+//                    break;
+//                }
+//            }
         }
     }
 
@@ -451,9 +468,13 @@ public class Socket {
 
     private void triggerChannelError() {
         synchronized (channels) {
-            for (final Channel channel : channels) {
+            for (String key : channels.keySet()) {
+                Channel channel = channels.get(key);
                 channel.trigger(ChannelEvent.ERROR.getPhxEvent(), null);
             }
+//            for (final Channel channel : channels) {
+//            channel.trigger(ChannelEvent.ERROR.getPhxEvent(), null);
+//            }
         }
     }
 

@@ -2,16 +2,15 @@ package org.phoenixframework.channels;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.LinkedBlockingDeque;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.LinkedBlockingDeque;
 
 /**
  * Encapsulation of a Phoenix channel: a Socket, a topic and the channel's state.
@@ -22,7 +21,7 @@ public class Channel {
 
     private static final Logger log = LoggerFactory.getLogger(Channel.class);
 
-    private final List<Binding> bindings = new ArrayList<>();
+    private final Map<String, Binding> bindings = new ConcurrentHashMap<>();
 
     private Timer channelTimer = null;
 
@@ -114,7 +113,7 @@ public class Channel {
     public Push join() throws IllegalStateException, IOException {
         if (this.joinedOnce) {
             throw new IllegalStateException(
-                "Tried to join multiple times. 'join' can only be invoked once per channel");
+                    "Tried to join multiple times. 'join' can only be invoked once per channel");
         }
         this.joinedOnce = true;
         this.sendJoin();
@@ -137,13 +136,14 @@ public class Channel {
      */
     public Channel off(final String event) {
         synchronized (bindings) {
-            for (final Iterator<Binding> bindingIter = bindings.iterator();
-                 bindingIter.hasNext(); ) {
-                if (bindingIter.next().getEvent().equals(event)) {
-                    bindingIter.remove();
-                    break;
-                }
-            }
+            bindings.remove(event);
+//            for (final Iterator<Binding> bindingIter = bindings.iterator();
+//                 bindingIter.hasNext(); ) {
+//                if (bindingIter.next().getEvent().equals(event)) {
+//                    bindingIter.remove();
+//                    break;
+//                }
+//            }
         }
         return this;
     }
@@ -155,7 +155,13 @@ public class Channel {
      */
     public Channel on(final String event, final IMessageCallback callback) {
         synchronized (bindings) {
-            this.bindings.add(new Binding(event, callback));
+            if (!bindings.containsKey(event)) {
+                bindings.put(event, new Binding(event, callback));
+            }
+
+//            if (!bindings.contains(binding)) {
+//                this.bindings.add(binding);
+//            }
         }
         return this;
     }
@@ -193,7 +199,7 @@ public class Channel {
      * @throws IllegalStateException Thrown if the channel has not yet been joined
      */
     private Push push(final String event, final JsonNode payload, final long timeout)
-        throws IOException, IllegalStateException {
+            throws IOException, IllegalStateException {
         if (!this.joinedOnce) {
             throw new IllegalStateException("Unable to push event before channel has been joined");
         }
@@ -242,10 +248,10 @@ public class Channel {
     @Override
     public String toString() {
         return "Channel{" +
-            "topic='" + topic + '\'' +
-            ", message=" + payload +
-            ", bindings(" + bindings.size() + ")=" + bindings +
-            '}';
+                "topic='" + topic + '\'' +
+                ", message=" + payload +
+                ", bindings(" + bindings.size() + ")=" + bindings +
+                '}';
     }
 
     /**
@@ -256,13 +262,22 @@ public class Channel {
      */
     void trigger(final String triggerEvent, final Envelope envelope) {
         synchronized (bindings) {
-            for (final Binding binding : bindings) {
+            for (String key : bindings.keySet()) {
+                Binding binding = bindings.get(key);
                 if (binding.getEvent().equals(triggerEvent)) {
                     // Channel Events get the full envelope
                     binding.getCallback().onMessage(envelope);
                     break;
                 }
+
             }
+//            for (final Binding binding : bindings) {
+//                if (binding.getEvent().equals(triggerEvent)) {
+//                    // Channel Events get the full envelope
+//                    binding.getCallback().onMessage(envelope);
+//                    break;
+//                }
+//            }
         }
     }
 
@@ -286,4 +301,12 @@ public class Channel {
     }
 
 
+    @Override
+    public boolean equals(Object o) {
+        if (o != null && o instanceof Channel) {
+            Channel c = (Channel) o;
+            return c.topic.equals(topic);
+        }
+        return false;
+    }
 }
