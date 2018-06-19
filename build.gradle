@@ -73,19 +73,8 @@ publishing {
 
 bintray {
 
-    File localPropsFile = file(project.rootProject.file('local.properties'))
-    if (localPropsFile.exists()) {
-        Properties p = new Properties()
-        p.load(new FileInputStream(localPropsFile))
-        p.each { name, value ->
-            ext[name] = value
-        }
-    } else {
-        throw new IllegalStateException("local.properties could not be located for build process")
-    }
-
-    user = buser
-    key = bapikey
+    user = System.getenv('BINTRAY_USER')
+    key = System.getenv('BINTRAY_KEY')
     pkg {
         repo = 'maven'
         name = 'java-phoenix-channels'
