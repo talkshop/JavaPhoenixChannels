@@ -3,6 +3,7 @@ plugins {
 }
 
 apply plugin: 'java'
+apply plugin: 'java-library'
 apply plugin: 'maven'
 apply plugin: 'maven-publish'
 apply plugin: 'groovy'
@@ -11,11 +12,11 @@ if (project.hasProperty('signing.keyId')) {
 }
 
 group = 'com.luca'
-version = '0.3.5'
+version = '0.3.6'
 
 allprojects {
-    sourceCompatibility = 1.7
-    targetCompatibility = 1.7
+    sourceCompatibility = 1.8
+    targetCompatibility = 1.8
 }
 
 dependencies {
@@ -62,24 +63,24 @@ publishing {
     publications {
         JavaPhoenixChannelsJar(MavenPublication) {
             from components.java
-            artifact sourcesJar
-            artifact javadocJar
             groupId 'com.luca.phoenix'
             artifactId 'JavaPhoenixChannels'
-            version '0.3.4'
+            version '0.3.6'
         }
     }
 }
 
 bintray {
-
     user = System.getenv('BINTRAY_USER')
     key = System.getenv('BINTRAY_KEY')
     pkg {
         repo = 'java-phoenix-channels'
         name = 'JavaPhoenixChannels'
-        licenses = ['BSD-3']
-        vcsUrl = 'https://github.com/jecsan/JavaPhoenixChannels.git'
+        licenses = ['BSD 3-Clause']
+        vcsUrl = 'https://github.com/talkshop/JavaPhoenixChannels.git'
+        version {
+            name = '0.3.6'
+        }
     }
     publications = ['JavaPhoenixChannelsJar']
 }
