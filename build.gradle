@@ -64,7 +64,7 @@ publishing {
         JavaPhoenixChannelsJar(MavenPublication) {
             from components.java
             groupId 'com.luca.phoenix'
-            artifactId 'JavaPhoenixChannels'
+            artifactId 'java-phoenix-channels'
             version '0.3.6'
         }
     }
