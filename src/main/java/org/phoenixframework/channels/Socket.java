@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
-import org.apache.log4j.varia.NullAppender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,16 +29,6 @@ import okio.ByteString;
 
 public class Socket {
 
-    public static boolean DEBUG = true;
-
-    static {
-        if (!DEBUG) {
-            org.apache.log4j.Logger.getRootLogger().removeAllAppenders();
-            org.apache.log4j.Logger.getRootLogger().addAppender(new NullAppender());
-        } else {
-            org.apache.log4j.BasicConfigurator.configure();
-        }
-    }
 
     private static final Logger log = LoggerFactory.getLogger(Socket.class);
 
