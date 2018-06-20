@@ -1,5 +1,5 @@
 plugins {
-    id "com.jfrog.bintray" version "1.7.3"
+    id "com.jfrog.bintray" version "1.8.2"
 }
 
 apply plugin: 'java'
@@ -10,8 +10,8 @@ if (project.hasProperty('signing.keyId')) {
     apply plugin: 'signing'
 }
 
-group = 'com.dyoed'
-version = '0.3.4'
+group = 'com.luca'
+version = '0.3.5'
 
 allprojects {
     sourceCompatibility = 1.7
@@ -21,8 +21,8 @@ allprojects {
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
     compile 'com.fasterxml.jackson.core:jackson-databind:2.8.3'
-    compile 'com.squareup.okhttp3:okhttp:3.9.1'
-    compile 'org.slf4j:slf4j-log4j12:1.7.22'
+    compile 'com.squareup.okhttp3:okhttp:3.10.0'
+    compile 'org.slf4j:slf4j-log4j12:1.7.25'
     testCompile 'org.codehaus.groovy:groovy-all:2.3.10'
     testCompile "org.spockframework:spock-core:1.0-groovy-2.3"
 
@@ -64,8 +64,8 @@ publishing {
             from components.java
             artifact sourcesJar
             artifact javadocJar
-            groupId 'com.dyoed.phoenix'
-            artifactId 'java-phoenix-channels'
+            groupId 'com.luca.phoenix'
+            artifactId 'JavaPhoenixChannels'
             version '0.3.4'
         }
     }
@@ -76,8 +76,8 @@ bintray {
     user = System.getenv('BINTRAY_USER')
     key = System.getenv('BINTRAY_KEY')
     pkg {
-        repo = 'maven'
-        name = 'java-phoenix-channels'
+        repo = 'java-phoenix-channels'
+        name = 'JavaPhoenixChannels'
         licenses = ['BSD-3']
         vcsUrl = 'https://github.com/jecsan/JavaPhoenixChannels.git'
     }
